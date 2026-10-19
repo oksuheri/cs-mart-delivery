@@ -1,0 +1,3 @@
+# CS Mart Delivery Backend
+# Server utilizes Python 3 standard library modules (http.server, sqlite3, json, threading)
+# No external pip dependencies required.

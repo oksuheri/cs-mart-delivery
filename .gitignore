@@ -1,0 +1,17 @@
+# Local binaries
+cloudflared
+tunnel_url.txt
+
+# SSL certificates
+cert.pem
+key.pem
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local config & IDE
+.vscode/
+.idea/
+.DS_Store

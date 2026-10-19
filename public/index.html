@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>CS Mart Delivery - Belanja Minimarket Cepat & Hemat</title>
+  <meta name="description" content="Platform PWA pemesanan dan pengantaran produk minimarket cepat, hemat dan terpercaya. Katalog offline, bayar tunai/digital, dan pelacakan kurir langsung.">
+  <meta name="theme-color" content="#090765">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-touch-fullscreen" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CS Mart">
+  <link rel="apple-touch-icon" href="/assets/icon-apple-touch.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-apple-touch.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/assets/icon-512.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/assets/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+
+  <!-- Immediate Head PWA Event Interceptor -->
+  <script>
+    window.deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      console.log('[PWA] Native install prompt intercepted in head!');
+      window.dispatchEvent(new CustomEvent('csmart-install-ready'));
+    });
+    window.addEventListener('appinstalled', function() {
+      console.log('[PWA] Application successfully installed!');
+      window.deferredInstallPrompt = null;
+      window.dispatchEvent(new CustomEvent('csmart-installed'));
+    });
+  </script>
+</head>
+<body>
+
+  <!-- 1. TOP ROLE SWITCHER / DEMO CONTROL BAR -->
+  <aside class="role-bar" aria-label="Demo Role Switcher">
+    <div class="role-bar-left">
+      <span class="role-tag">Demo Role:</span>
+      <select id="role-select" class="role-select" onchange="app.switchRole(this.value)">
+        <option value="usr-siti">Konsumen (Siti Rahma - Gold Member)</option>
+        <option value="usr-rian">Admin Toko (Rian - CS Mart Kemang)</option>
+        <option value="usr-dewi">Admin Toko (Dewi - CS Mart Sudirman)</option>
+        <option value="usr-budi">Kurir (Budi Santoso - Toko Kemang)</option>
+        <option value="usr-admin-pusat">Admin Pusat CS Mart</option>
+      </select>
+    </div>
+    <div class="role-bar-right">
+      <div id="network-status-badge" class="status-badge-network online">
+        <span class="status-dot"></span>
+        <span id="network-status-text">Online</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 2. MAIN HEADER -->
+  <header class="app-header">
+    <a href="#" class="header-brand" onclick="app.navigateHome(); return false;">
+      <div class="app-icon-wrap">
+        <img src="/assets/logo.jpg" alt="CS Mart Logo" class="brand-logo-img">
+        <span id="app-icon-badge" class="app-icon-badge">2</span>
+      </div>
+      <div class="brand-text-container">
+        <div class="brand-title">
+          CS Mart <span class="brand-badge">DELIVERY</span>
+        </div>
+        <div class="brand-subtitle">Minimarket Terdekat & Tercepat</div>
+      </div>
+    </a>
+
+    <!-- Store Selector Button (for Consumers) -->
+    <button id="btn-store-picker" class="header-store-btn" onclick="app.openStoreModal()">
+      <span class="store-indicator-dot"></span>
+      <span id="current-store-name">📍 CS Mart Kemang</span>
+      <span style="font-size: 0.7rem; opacity: 0.6;">▾</span>
+    </button>
+
+    <div class="header-actions">
+      <!-- In-app Notification Bell -->
+      <button id="btn-notifications" class="icon-btn" onclick="app.toggleNotifications()" title="Notifikasi" aria-label="Notifikasi">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span id="notif-badge" class="icon-badge" style="display: none;">0</span>
+      </button>
+
+      <!-- Wishlist / Favorites -->
+      <button id="btn-wishlist" class="icon-btn" onclick="app.showWishlistModal()" title="Favorit Saya" aria-label="Favorit">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span id="wishlist-badge" class="icon-badge" style="display: none;">0</span>
+      </button>
+
+      <!-- Header Cart Icon for Desktop -->
+      <button id="btn-header-cart" class="icon-btn" onclick="app.openCartDrawer()" title="Keranjang Belanja" aria-label="Keranjang">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span id="header-cart-badge" class="icon-badge" style="display: none;">0</span>
+      </button>
+
+      <!-- User Login / Profile Button (Update 2) -->
+      <button id="btn-header-login" class="filter-pill" onclick="app.openLoginModal()" style="font-size:0.75rem; padding:6px 12px; display:inline-flex; align-items:center; gap:4px; border-color:var(--primary); color:var(--primary);">
+        👤 <span id="header-user-name">Masuk</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- OFFLINE STATUS BANNER -->
+  <div id="offline-banner" class="offline-banner" style="display: none;">
+    <div class="offline-banner-left">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"></path>
+      </svg>
+      <span><strong>Mode Offline:</strong> Anda melihat katalog tersimpan. Terakhir disinkronkan: <span id="offline-sync-time">-</span>. Harga & stok mungkin kedaluwarsa.</span>
+    </div>
+    <button class="filter-pill" onclick="app.refreshCatalog()" style="font-size:0.7rem; padding:3px 8px;">Coba Sinkron</button>
+  </div>
+
+  <!-- 3. MAIN DYNAMIC APP CONTAINER -->
+  <main id="main-content" class="app-container">
+    <!-- Populated dynamically by app.js based on role: Consumer / Store Admin / Courier / Central Admin -->
+  </main>
+
+  <!-- 4. FLOATING CART SUMMARY BAR (Customer only) -->
+  <aside id="floating-cart-bar" class="floating-cart-bar" style="display: none;">
+    <div class="floating-cart-left">
+      <div id="floating-cart-count" class="floating-cart-badge">0</div>
+      <div class="floating-cart-info">
+        <div id="floating-cart-items-text" class="floating-cart-items-text">0 Produk dipilih</div>
+        <div id="floating-cart-total" class="floating-cart-total">Rp 0</div>
+      </div>
+    </div>
+    <button class="btn-view-cart" onclick="app.openCartDrawer()">
+      Lihat Keranjang 🛒
+    </button>
+  </aside>
+
+  <!-- 5. MOBILE BOTTOM NAVIGATION (Footer Nav) -->
+  <nav id="mobile-nav-bar" class="mobile-nav-bar" aria-label="Navigasi Bawah">
+    <button class="nav-tab-btn active" id="tab-home" onclick="app.navigateTab('home')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+      <span>Katalog</span>
+    </button>
+
+    <button class="nav-tab-btn" id="tab-orders" onclick="app.navigateTab('orders')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      <span>Pesanan</span>
+    </button>
+
+    <button class="nav-tab-btn" id="tab-wallet" onclick="app.navigateTab('wallet')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+        <line x1="1" y1="10" x2="23" y2="10"></line>
+      </svg>
+      <span>CS Pay</span>
+    </button>
+
+    <button class="nav-tab-btn" id="tab-notifications" onclick="app.toggleNotifications()">
+      <div style="position: relative; display: inline-flex;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span id="bottom-notif-badge" class="icon-badge" style="top: -5px; right: -7px; min-width: 16px; height: 16px; font-size: 0.6rem;">2</span>
+      </div>
+      <span>Notifikasi</span>
+    </button>
+
+    <button class="nav-tab-btn" id="tab-account" onclick="app.navigateTab('account')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+      <span>Akun</span>
+    </button>
+  </nav>
+
+  <!-- 6. MODALS CONTAINER (Populated dynamically) -->
+  <div id="modal-container"></div>
+
+  <!-- 7. CART & CHECKOUT DRAWER -->
+  <div id="cart-drawer-container"></div>
+
+  <!-- Core Scripts -->
+  <script src="/app.js?v=5"></script>
+</body>
+</html>

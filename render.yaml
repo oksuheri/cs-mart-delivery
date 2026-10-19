@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: cs-mart-delivery
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: "pip install -r requirements.txt || true"
+    startCommand: "python server.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
